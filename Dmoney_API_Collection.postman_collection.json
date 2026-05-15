@@ -1428,6 +1428,555 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Negative Cases",
+      "item": [
+        {
+          "name": "invalid_Login",
+          "item": [
+            {
+              "name": "primary_login",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"email\":\"{{agentEmail}}\",\r\n  \"password\": \"1234\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/user/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "user",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Gmail_List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json() ;\r",
+                      "\r",
+                      "let latestEmailId = jsonData.messages[0].id;\r",
+                      "\r",
+                      "pm.collectionVariables.set(\"emailId\", latestEmailId )\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gmailToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+                  "protocol": "https",
+                  "host": [
+                    "gmail",
+                    "googleapis",
+                    "com"
+                  ],
+                  "path": [
+                    "gmail",
+                    "v1",
+                    "users",
+                    "me",
+                    "messages"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Read Email",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "let jsonData = pm.response.json();\r",
+                      "let snippet = jsonData.snippet;\r",
+                      "\r",
+                      "//let otp = snippet.match(/\\b\\d{4}\\b/)[0];\r",
+                      "let otp = snippet.match(/\\b\\d{4}\\b/)[0];\r",
+                      "\r",
+                      "\r",
+                      "pm.collectionVariables.set(\"otp\", otp);\r",
+                      "\r",
+                      "\r",
+                      "\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gmailToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gmailToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://gmail.googleapis.com/gmail/v1/users/me/messages/{{emailId}}",
+                  "protocol": "https",
+                  "host": [
+                    "gmail",
+                    "googleapis",
+                    "com"
+                  ],
+                  "path": [
+                    "gmail",
+                    "v1",
+                    "users",
+                    "me",
+                    "messages",
+                    "{{emailId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Invalid otp",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"User login should fail with invalid OTP\", function(){\r",
+                      "\r",
+                      "pm.expect(jsonData.message).to.not.contain(\"Login successful\")\r",
+                      "\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Status code is not 200\", function(){\r",
+                      "\r",
+                      "pm.expect(pm.response.code).to.not.eql(200)\r",
+                      "\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"identifier\": \"{{agentEmail}}\",\r\n  \"otp\": 1234\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/user/verify-otp",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "user",
+                    "verify-otp"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized user creation",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var randomId = _.random ( 100000,999999 );\r",
+                  "\r",
+                  "var phoneNumber = \"01701\" + randomId;\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"randomId\", randomId);\r",
+                  "pm.collectionVariables.set (\"randomPhoneNumber\", phoneNumber );"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Unauthorized user cannot create customer\", function(){\r",
+                  "\r",
+                  "pm.expect(jsonData.message).to.not.contain(\"User created\")\r",
+                  "\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 401\", function(){\r",
+                  "\r",
+                  "pm.expect(pm.response.code).to.be.oneOf([401])\r",
+                  "\r",
+                  "});\r",
+                  "\r",
+                  "\r",
+                  "\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "X-AUTH-SECRET-KEY",
+                "value": "{{secretKey}}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"{{$randomFullName}}\",\r\n  \"email\": \"nishatafla67+{{randomId}}@gmail.com\",\r\n  \"password\": \"1234\",\r\n  \"phone_number\": \"{{randomPhoneNumber}}\",\r\n  \"nid\": \"9876543210\",\r\n  \"role\": \"Customer\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "unauthorized deposit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Deposit should fail without valid agent\", function () {\r",
+                  "    pm.expect(jsonData.message).to.not.contain(\"Deposit successful\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code should not be 201\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(201);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{agentToken}}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "X-AUTH-SECRET-KEY",
+                "value": "{{secretKey}}",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"from_account\": \"{{agentphoneNumber}}\",\r\n  \"to_account\": \"{{customer1_phoneNumber}}\",\r\n  \"amount\": 2000\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transaction/deposit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transaction",
+                "deposit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "limit exceeded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Deposit should fail for amount above limit\", function () {\r",
+                  "    pm.expect(jsonData.message).to.not.contain(\"Deposit successful\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Should return error status\", function () {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 403]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{agentToken}}",
+                "type": "text"
+              },
+              {
+                "key": "X-AUTH-SECRET-KEY",
+                "value": "{{secretKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"from_account\": \"{{agentphoneNumber}}\",\r\n  \"to_account\": \"{{customer1_phoneNumber}}\",\r\n  \"amount\": 20000\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transaction/deposit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transaction",
+                "deposit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "unauthorized withdrawl",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Customer cannot withdraw without login\", function () {\r",
+                  "    pm.expect(jsonData.message).to.include(\"No Token Found!\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 401\", function () {\r",
+                  "    pm.response.to.have.status(401);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{Customer2Token}}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "X-AUTH-SECRET-KEY",
+                "value": "{{secretKey}}",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"from_account\": \"{{customer2_phoneNumber}}\",\r\n  \"to_account\": \"{{agentphoneNumber}}\",\r\n  \"amount\": 5000\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transaction/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transaction",
+                "withdraw"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "unauthorized withdrawl Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Withdraw failed due to insufficient balance\", function () {\r",
+                  "    pm.expect(jsonData.message).to.include(\"Daily amount limit exceeded\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 403 or 400\", function () {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 403]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{Customer2Token}}",
+                "type": "text"
+              },
+              {
+                "key": "X-AUTH-SECRET-KEY",
+                "value": "{{secretKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"from_account\": \"{{customer2_phoneNumber}}\",\r\n  \"to_account\": \"{{agentphoneNumber}}\",\r\n  \"amount\": 50000\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transaction/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transaction",
+                "withdraw"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "event": [

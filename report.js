@@ -6,7 +6,7 @@ newman.run({
     collection:require('./Dmoney_API_Collection.postman_collection.json'),
     reporters: 'htmlextra',
     iterationCount: 1,
-     delayRequest: 15000, 
+     delayRequest: 20000, 
          envVar: [
         {
 
